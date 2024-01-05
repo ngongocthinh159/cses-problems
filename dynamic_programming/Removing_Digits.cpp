@@ -93,7 +93,7 @@ void solve() {
     for (int i = 1; i <= n; i++) {
         for (auto c : to_string(i)) {
             int digit = c - '0';
-            dp[i] = min(dp[i], 1 + dp[i - digit]);
+            if (digit != 0) dp[i] = min(dp[i], 1 + dp[i - digit]);
         }
     }
     cout << dp[n] << "\n";
