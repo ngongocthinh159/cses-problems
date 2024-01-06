@@ -82,21 +82,21 @@ typedef long long int int64;
 typedef unsigned long long int  uint64;
 
 /* clang-format on */
-const int mxN = 1e6 + 5;
 int n;
-int dp[mxN];
 void solve() {
     cin >> n;
-    for (int i = 0; i <= n; i++)
-        dp[i] = INF;
-    dp[0] = 0;
+    deque<int> dq;
+    dq.push_back(0);
     for (int i = 1; i <= n; i++) {
+        int val = INF;
         for (auto c : to_string(i)) {
             int digit = c - '0';
-            if (digit != 0) dp[i] = min(dp[i], 1 + dp[i - digit]);
+            if (digit != 0) val = min(val, 1 + dq[dq.size() - digit]);
         }
+        dq.push_back(val);
+        if (dq.size() > 10) dq.pop_front();
     }
-    cout << dp[n] << "\n";
+    cout << dq.back() << "\n";
 }
 
 /* Main()  function */
