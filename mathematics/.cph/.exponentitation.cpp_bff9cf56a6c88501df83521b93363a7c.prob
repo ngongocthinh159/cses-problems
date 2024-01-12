@@ -1,1 +1,0 @@
-{"name":"Local: exponentitation","url":"c:\\Users\\Admin\\Desktop\\cses\\mathematics\\exponentitation.cpp","tests":[{"id":1688207525228,"input":"3\n3 4\n2 8\n123 123","output":"81\n256\n921450052"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"c:\\Users\\Admin\\Desktop\\cses\\mathematics\\exponentitation.cpp","group":"local","local":true}
