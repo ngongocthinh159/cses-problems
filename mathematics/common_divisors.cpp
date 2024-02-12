@@ -67,8 +67,9 @@ void _print(pbds v) {cerr << "[ "; for (auto i : v) {_print(i); cerr << " ";} ce
  
 mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 /*---------------------------------------------------------------------------------------------------------------------------*/
-ll gcd(ll a, ll b) {if (b > a) {return gcd(b, a);} if (b == 0) {return a;} return gcd(b, a % b);}
-ll expo(ll a, ll b, ll mod) {ll res = 1; while (b > 0) {if (b & 1)res = (res * a) % mod; a = (a * a) % mod; b = b >> 1;} return res;} // a = 0 return 0 | b = 0 return 1
+ll __gcd__(ll a, ll b) {if (!a || !b) return a | b; unsigned shift = __builtin_ctz(a | b); a >>= __builtin_ctz(a); do { b >>= __builtin_ctz(b); if (a > b) swap(a, b); b -= a; } while (b); return a << shift;} // only a >= 0 && b >= 0
+ll gcd(ll a, ll b) {a = abs(a); b = abs(b); return __gcd__(a, b);} // get abs(a), abs(b) in case a < 0 || b < 0
+ll expo(ll a, ll b, ll mod) {if (a==0) return 1%mod; ll res = 1; while (b > 0) {if (b & 1)res = (res * a) % mod; a = (a * a) % mod; b = b >> 1;} return res;} // a = 0 return 0 | b = 0 return 1
 void extendgcd(ll a, ll b, ll*v) {if (b == 0) {v[0] = 1; v[1] = 0; v[2] = a; return ;} extendgcd(b, a % b, v); ll x = v[1]; v[1] = v[0] - v[1] * (a / b); v[0] = x; return;} //pass an arry of size1 3
 ll mminv(ll a, ll b) {ll arr[3]; extendgcd(a, b, arr); return arr[0];} //for non prime b
 ll mminvprime(ll a, ll b) {assert(gcd(a, b) == 1); return expo(a, b - 2, b);} // inverse mod: a^-1 % b = a^(b-2) % b. When gcd(a,b)=1 (or b prime)
@@ -84,11 +85,23 @@ ll phin(ll n) {ll number = n; if (n % 2 == 0) {number /= 2; while (n % 2 == 0) n
 ll getRandomNumber(ll l, ll r) {return uniform_int_distribution<ll>(l, r)(rng);} 
 /*--------------------------------------------------------------------------------------------------------------------------*/
 
-ll a, b, c;
+int n;
 void solve() {
-    cin >> a >> b >> c;
-    ll r = (b == 0 && c == 0 ? 1 : expo(b,c,MOD-1));
-    cout << (a == 0 && r == 0 ? 1 : expo(a,r,MOD)) << nline;
+    cin >> n;
+    vector<int> a(1e6 + 1,0);
+    ll mx = LONG_MIN;
+    for (int i = 0; i < n; i++) {
+        ll val; cin >> val;
+        mx = max(val, mx);
+        a[val]++;
+    }
+    for (int i = mx; i >= 1; i--) {
+        int cnt = 0;
+        for (int j = i; j <= mx; j += i) {
+            cnt += a[j];
+            if (cnt > 1) {cout << i << nline; return;}
+        }
+    }
 }
 
 int main() {
@@ -98,10 +111,7 @@ int main() {
     fastio();
     IN_OUT();
     auto start1 = high_resolution_clock::now();
-    int cases; cin >> cases;
-    while (cases--) {
-        solve();
-    }
+    solve();
     auto stop1 = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop1 - start1);
 #ifdef ThinhNgo
