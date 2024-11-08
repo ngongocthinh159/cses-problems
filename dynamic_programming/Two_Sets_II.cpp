@@ -106,6 +106,10 @@ void solve() {
 
     vector<vector<int>> dp(n + 1,
         vector<int>(target + 1));
+    // dp[i][j]: if we just use number from [1 -> i], how many way to create sum of j
+    // transition (push dp): 
+    // dp[i + 1][j] += dp[i][j] (not take i)
+    // dp[i + 1][j + i] += dp[i][j] (take i)
     dp[2][1] = 1; // dp[2][2] the same as dp[2][1]
     dp[2][3] = 1;
     for (int i = 3; i <= n; i++) {
