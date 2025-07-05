@@ -41,7 +41,9 @@ void solve() {
     distNode[1].push(0);
     q.push({0, 1});
     vector<ll> ans;
-    while (q.size()) {  // https://usaco.guide/problems/cses-1196-flight-routes/solution
+    // https://usaco.guide/problems/cses-1196-flight-routes/solution
+    // https://en.wikipedia.org/wiki/K_shortest_path_routing
+    while (q.size()) {  
         auto [w_u, u] = q.top();
         q.pop();
         if (!cnt[u]) continue;
