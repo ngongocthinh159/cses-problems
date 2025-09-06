@@ -1,6 +1,6 @@
 /**
  * Author: Thinh Ngo Ngoc
- * Solution for: https://cses.fi/problemset/task/1741
+ * Solution for: https://cses.fi/problemset/task/1741/
 */
 
 #include<bits/stdc++.h>
@@ -13,6 +13,8 @@ using namespace std;
 #define LINF ((long long)1e18)
 #define IINF ((int)1e9)
 #define MASK(i) (1LL << (i))
+#define all(v) (v).begin(), (v).end()
+
 
 template<class X, class Y>
 bool minimize(X &x, const Y &y) {
@@ -40,81 +42,137 @@ struct chash {static uint64_t splitmix64(uint64_t x) {x += 0x9e3779b97f4a7c15;x 
 struct chashp {static uint64_t splitmix64(uint64_t x) {x += 0x9e3779b97f4a7c15;x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;x = (x ^ (x >> 27)) * 0x94d049bb133111eb;return x ^ (x >> 31);}size_t operator()(pair<uint64_t,uint64_t> x) const {static const uint64_t FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();return splitmix64(x.first + FIXED_RANDOM)^(splitmix64(x.second + FIXED_RANDOM) >> 1);}}; // https://codeforces.com/blog/entry/62393
 /*--------------------------------------------------------------------------------------------------------------------------*/
 
-#define N 200005
-#define M 400005
+#define N 100005
+#define x1 _x1
+#define x2 _x2
+#define y1 _y1
+#define y2 _y2
+
 struct Event {
-    int x, y1, y2, delta;
+    int x; 
+    int type;
+    int y1;
+    int y2;
 };
-int n;
-int y[N];
-Event events[M];
+int n, y[2*N];
+int top1, top, topE;
+unordered_map<int,int,chash> yToIdx;
+Event es[2*N];
+struct Data {
+    int mn = 0;
+    int len = 0;
+    int lazy = 0;
+    // Data() {
+    //     mn = 0, len = 0, lazy = 0;
+    // }
+};
 struct SegTree {
-    struct Data {
-        int cnt;
-        ll sum;
-    };
     vector<Data> node;
+    vector<int> lazy;
     int n;
-    SegTree(int sz) {
-        n = sz;
+    SegTree(int _n) {
+        n = _n;
+        node.assign(4*n, Data{0, 0, 0});
+
         node.resize(4*n);
+        lazy.resize(4*n);
+        build(1, 0, n - 1);
     }
-    void update(int idx, int s, int e, int l, int r, int delta) {
+    Data merge(const Data &l, const Data &r) {
+        Data res;
+        if (l.mn < r.mn) {
+            res = l;
+        } else if (l.mn > r.mn) {
+            res = r;
+        } else {
+            res.mn = l.mn;
+            res.len = l.len + r.len;
+        }
+        res.lazy = 0; // IMPORTANT: parent node will not inherit lazy value from children when merge, this is subtle bug
+        return res;
+    }
+    void build(int idx, int s, int e) {
+        if (s == e) {
+            node[idx].mn = 0;
+            node[idx].len = y[s + 1] - y[s];
+            node[idx].lazy = 0;
+            return;
+        }
+        int m = (s + e)/2;
+        build(2*idx, s, m);
+        build(2*idx + 1, m + 1, e);
+        node[idx] = merge(node[2*idx], node[2*idx + 1]);
+    }
+    void apply(int idx, int s, int e, int val) {
+        node[idx].mn += val;
+        node[idx].lazy += val;
+    }
+    void push_down(int idx, int s, int e) {
+        int m = (s + e)/2;
+        apply(2*idx, s, m, node[idx].lazy);
+        apply(2*idx + 1, m + 1, e, node[idx].lazy);
+        node[idx].lazy = 0;
+    }
+    void update(int idx, int s, int e, int l, int r, int val) {
         if (s > r || l > e || s > e || l > r) return;
         if (l <= s && e <= r) {
-            node[idx].cnt += delta;
-        } else {
-            int m = (s + e)/2;
-            update(2*idx, s, m, l, r, delta);
-            update(2*idx + 1, m + 1, e, l, r, delta);
+            apply(idx, s, e, val);
+            return;
         }
-        // merge
-        if (node[idx].cnt > 0)
-            node[idx].sum = y[e + 1] - y[s];
-        else {
-            if (s == e)
-                node[idx].sum = 0;
-            else
-                node[idx].sum = node[2*idx].sum + node[2*idx + 1].sum;
-        }
+        push_down(idx, s, e);
+        int m = (s + e)/2;
+        update(2*idx, s, m, l, r, val);
+        update(2*idx + 1, m + 1, e, l, r, val);
+        node[idx] = merge(node[2*idx], node[2*idx + 1]);
     }
-    ll coveredSum() {
-        return node[1].sum;
+    int covered_len() {
+        if (n == 0) return 0;
+        ll res = y[top - 1] - y[0];
+        if (node[1].mn == 0) res -= node[1].len;
+        return res;
     }
 };
+
 void pre_compute() {
     
 }
 void solve() {
     cin >> n;
-    int top = 0;
-    int topE = 0;
+    top = 0, topE = 0;
     for (int i = 0; i < n; i++) {
+        
         int x1, y1, x2, y2; cin >> x1 >> y1 >> x2 >> y2;
         int l = min(x1, x2);
         int r = max(x1, x2);
         int t = max(y1, y2);
         int b = min(y1, y2);
+
         y[top++] = y1;
         y[top++] = y2;
-        events[topE++] = Event{l, b, t, 1};
-        events[topE++] = Event{r, b, t, -1};
+        es[topE++] = Event{l, 1, b, t};
+        es[topE++] = Event{r, -1, b, t};
     }
+    sort(es, es + topE, [&](auto &e1, auto &e2) {
+        if (e1.x < e2.x) return true;
+        return false;
+    });
     sort(y, y + top);
     top = unique(y, y + top) - y;
-    sort(events, events + topE, [](auto &e1, auto &e2) {
-        return e1.x < e2.x;
-    });
-    unordered_map<int,int,chash> yToIdx;
-    for (int i = 0; i < top; i++) yToIdx[y[i]] = yToIdx.size();
-    int segments = top - 1;
-    SegTree tree(segments);
+    for (int i = 0; i < top; i++)
+        yToIdx[y[i]] = yToIdx.size();
+    int interval = top - 1;
+    SegTree tree(interval);
+    int px = es[0].x;
     ll ans = 0;
-    int prev_x = 0;
-    for (int i = 0; i < topE; i++) {
-        ans += 1LL * (events[i].x - prev_x) * tree.coveredSum();
-        prev_x = events[i].x;
-        tree.update(1, 0, segments - 1, yToIdx[events[i].y1], yToIdx[events[i].y2] - 1, events[i].delta);
+    for (int i = 0; i < topE;) {
+        ans += 1LL * (es[i].x - px) * tree.covered_len();
+        
+        int sx = es[i].x;
+        px = es[i].x;
+        while (i < topE && sx == es[i].x) {
+            tree.update(1, 0, interval - 1, yToIdx[es[i].y1], yToIdx[es[i].y2] - 1, es[i].type);
+            i++;
+        }
     }
     cout << ans << nline;
 }
